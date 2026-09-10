@@ -66,6 +66,7 @@ static int16_t  mfi_axes[MAX_USERS][MAX_MFI_AXES];
 static __weak GCController *mfi_controllers[MAX_MFI_CONTROLLERS];
 static MFIRumbleController *mfi_rumblers[MAX_MFI_CONTROLLERS];
 #define MFI_WEAK_RUMBLE 0.7f
+#define MFI_TOUCHPAD_BUTTON (RARCH_FIRST_CUSTOM_BIND + 1)
 static bool mfi_inited;
 
 static bool apple_gamecontroller_available(void)
@@ -136,7 +137,12 @@ static void apple_gamecontroller_joypad_poll_internal(GCController *controller, 
         *buttons |= [profile.buttons[GCInputButtonOptions] isPressed]         ? (1 << RETRO_DEVICE_ID_JOYPAD_SELECT) : 0;
         *buttons |= [profile.buttons[GCInputButtonMenu] isPressed]            ? (1 << RETRO_DEVICE_ID_JOYPAD_START)  : 0;
         *buttons |= [profile.buttons[GCInputButtonHome] isPressed]            ? (1 << RARCH_FIRST_CUSTOM_BIND)       : 0;
+        GCControllerButtonInput *touchpadButton =
+            profile.buttons[GCInputDualShockTouchpadButton];
 
+        *buttons |= [touchpadButton isPressed]
+            ? (1u << MFI_TOUCHPAD_BUTTON)
+            : 0;
         mfi_axes[slot][0] = [[profile.dpads[GCInputLeftThumbstick] xAxis] value]  * 32767.0f;
         mfi_axes[slot][1] = [[profile.dpads[GCInputLeftThumbstick] yAxis] value]  * 32767.0f;
         mfi_axes[slot][2] = [[profile.dpads[GCInputRightThumbstick] xAxis] value] * 32767.0f;
