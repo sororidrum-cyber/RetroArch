@@ -1,0 +1,54 @@
+name: Build RetroArch iOS Touchpad
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build unsigned RetroArch for iOS
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -workspace pkg/apple/RetroArch.xcworkspace \
+            -destination generic/platform=iOS \
+            -config Release \
+            -scheme "RetroArch iOS Release" \
+            -xcconfig pkg/apple/GitHubCI.xcconfig \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            PROVISIONING_PROFILE_SPECIFIER="" \
+            -derivedDataPath build
+
+      - name: Package IPA
+        run: |
+          set -euo pipefail
+          APP_PATH="$(find build/Build/Products/Release-iphoneos -maxdepth 1 -type d -name '*.app' -print -quit)"
+          if [ -z "$APP_PATH" ]; then
+            echo "RetroArch .app was not found"
+            find build/Build/Products -maxdepth 3 -type d -name '*.app' -print || true
+            exit 1
+          fi
+
+          echo "Packaging: $APP_PATH"
+
+          rm -rf Payload RetroArch-Touchpad.ipa
+          mkdir Payload
+          cp -R "$APP_PATH" Payload/
+          zip -qry RetroArch-Touchpad.ipa Payload
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: RetroArch-Touchpad-iOS
+          path: RetroArch-Touchpad.ipa
+          if-no-files-found: error
