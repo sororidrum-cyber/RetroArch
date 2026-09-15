@@ -13,7 +13,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
+      - name: Download iOS cores
+        run: |
+          set -euo pipefail
+          bash pkg/apple/update-cores.sh appstore
       - name: Build unsigned RetroArch for iOS
         run: |
           set -euo pipefail
